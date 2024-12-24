@@ -1,0 +1,17 @@
+version: "2.1"
+services:
+  heimdall:
+    build: ./momentum
+    container_name: momentum
+    volumes:
+      - momentum:/root/.config/Momentum
+      -  ./data:/root/Momentum
+    environment:
+      - TZ=Europe/Berlin
+    ports:
+      - 5901:5901
+    restart: unless-stopped
+
+
+volumes:
+  momentum:
