@@ -1,17 +1,22 @@
-version: "2.1"
 services:
-  heimdall:
+  momentum:
+    image: ${MOMENTUM_IMAGE:-ghcr.io/chriskretschmer/momentum-docker:latest}
     build: ./momentum
     container_name: momentum
     volumes:
       - momentum:/root/.config/Momentum
-      -  ./data:/root/Momentum
+      - ./data:/root/Momentum
     environment:
-      - TZ=Europe/Berlin
+      - TZ=${TZ:-Europe/Berlin}
+      - RESOLUTION=${RESOLUTION:-1920x1080}
+      # Set in .env (see .env.example). If empty, a random password is
+      # generated on every start and printed to the container log.
+      - VNC_PASSWORD=${VNC_PASSWORD:-}
     ports:
-      - 5901:5901
+      # VNC is unencrypted: bind to localhost and tunnel (SSH/VPN) by default.
+      # Set VNC_BIND=0.0.0.0 in .env to expose it on all interfaces.
+      - ${VNC_BIND:-127.0.0.1}:5901:5901
     restart: unless-stopped
-
 
 volumes:
   momentum:
