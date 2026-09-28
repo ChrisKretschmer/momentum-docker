@@ -47,6 +47,14 @@ rm -f "$VNC_DIR"/*:"${DISPLAY_NUM}".log
 echo "Starting VNC server at $RESOLUTION on display :$DISPLAY_NUM..."
 vncserver ":$DISPLAY_NUM" -geometry "$RESOLUTION"
 
+NOVNC_PID=""
+if [ "${NOVNC_ENABLED:-true}" = "true" ]; then
+    NOVNC_PORT="${NOVNC_PORT:-6080}"
+    echo "Starting noVNC on port $NOVNC_PORT..."
+    websockify --web /usr/share/novnc "$NOVNC_PORT" "localhost:$((5900 + DISPLAY_NUM))" &
+    NOVNC_PID=$!
+fi
+
 export DISPLAY=":$DISPLAY_NUM"
 momentum-prod --no-sandbox &
 APP_PID=$!
@@ -55,7 +63,7 @@ APP_PID=$!
 # so its lock/pid files are removed cleanly instead of being left behind.
 shutdown() {
     echo "Received shutdown signal, stopping Momentum and VNC server on display :$DISPLAY_NUM..."
-    kill "$APP_PID" 2>/dev/null || true
+    kill "$APP_PID" $NOVNC_PID 2>/dev/null || true
     vncserver -kill ":$DISPLAY_NUM" >/dev/null 2>&1 || true
     rm -f "/tmp/.X${DISPLAY_NUM}-lock" "/tmp/.X11-unix/X${DISPLAY_NUM}"
     exit 0
@@ -68,5 +76,6 @@ set +e
 wait "$APP_PID"
 STATUS=$?
 echo "Momentum exited with status $STATUS"
+[ -n "$NOVNC_PID" ] && kill "$NOVNC_PID" 2>/dev/null
 vncserver -kill ":$DISPLAY_NUM" >/dev/null 2>&1 || true
 exit "$STATUS"

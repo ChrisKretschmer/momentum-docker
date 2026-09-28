@@ -12,10 +12,13 @@ services:
       # Set in .env (see .env.example). If empty, a random password is
       # generated on every start and printed to the container log.
       - VNC_PASSWORD=${VNC_PASSWORD:-}
+      - NOVNC_ENABLED=${NOVNC_ENABLED:-true}
     ports:
-      # VNC is unencrypted: bind to localhost and tunnel (SSH/VPN) by default.
-      # Set VNC_BIND=0.0.0.0 in .env to expose it on all interfaces.
-      - ${VNC_BIND:-127.0.0.1}:5901:5901
+      # Bind address and host port are configurable via .env.
+      # Default 127.0.0.1 = reachable only from the host / via SSH tunnel;
+      # set to 0.0.0.0 to expose on all interfaces.
+      - ${VNC_BIND:-127.0.0.1}:${VNC_PORT:-5901}:5901
+      - ${NOVNC_BIND:-127.0.0.1}:${NOVNC_PORT:-6080}:6080
     restart: unless-stopped
 
 volumes:

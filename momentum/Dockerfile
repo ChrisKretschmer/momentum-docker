@@ -15,6 +15,7 @@ RUN apt-get update \
         /tmp/momentum.deb \
         fluxbox xterm \
         tightvncserver \
+        novnc websockify \
         dbus-x11 \
         xfonts-base \
         tzdata \
@@ -26,11 +27,17 @@ RUN apt-get update \
 ENV USER=root \
     HOME=/root \
     TZ=Etc/UTC \
-    RESOLUTION=1920x1080
+    RESOLUTION=1920x1080 \
+    NOVNC_ENABLED=true \
+    NOVNC_PORT=6080
 
 # The VNC password is set at runtime via VNC_PASSWORD or VNC_PASSWORD_FILE,
 # never baked into the image.
-RUN mkdir -p /root/.vnc && touch /root/.Xauthority
+# Opening http://host:6080/ connects straight to the desktop.
+RUN mkdir -p /root/.vnc && touch /root/.Xauthority \
+    && rm -f /usr/share/novnc/index.html \
+    && printf '%s\n' '<!DOCTYPE html><meta http-equiv="refresh" content="0; url=vnc.html?autoconnect=true&resize=scale">' \
+        > /usr/share/novnc/index.html
 
 WORKDIR /app
 COPY --chmod=755 start-vnc.sh start-vnc.sh
@@ -40,6 +47,7 @@ VOLUME /root/.config/Momentum
 # downloads
 VOLUME /root/Momentum
 
-EXPOSE 5901
+# 5901 = VNC, 6080 = noVNC (browser)
+EXPOSE 5901 6080
 
 CMD ["./start-vnc.sh"]
